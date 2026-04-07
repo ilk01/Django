@@ -48,7 +48,7 @@ def list_notes()-> list[dict[str, Any]]:
 def get_note(note_id: int) -> dict[str, Any]|None:
     for note in _NOTES:
         if note['id'] == note_id:
-            return deepcopy(_NOTES[note_id])
+            return deepcopy(note)
     return None
 
 
@@ -83,7 +83,7 @@ def update_note(
             note['tag'] = tag.strip()
             note['category'] = category.strip()
             return deepcopy(note)
-        return None
+    return None
 
 
 def delete_note(note_id: int) -> bool:
