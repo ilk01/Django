@@ -1,0 +1,10 @@
+
+{% if note %}
+    <h1>{{ note.title }}</h1>
+    <p><strong>Category: </strong>{{ note.category }}</p>
+    <p><strong>Date: </strong>{{ note.created_at }}</p>
+    <p>{{ note.content }}</p>
+    <p><strong>Tags: </strong>{{ note.tags }}</p>
+{% else %}
+    <p>Note not found</p>
+{% endif %}

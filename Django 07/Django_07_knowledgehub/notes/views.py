@@ -427,7 +427,7 @@ def note_edit(request: HttpRequest, note_id: int) -> HttpResponse:
     if note is None:
         return HttpResponse(_html_shell("404 not found", f"""
     <h1>Can't edit</h1>
-    <p class="muted">Note id: {escape(str(note_id))} nor found</p>
+    <p class="muted">Note id: {escape(str(note_id))} not found</p>
     <p><a href="{escape(reverse("notes_list"))}">Return to Nodes List</a></p>
 """), status=404)
 
@@ -525,5 +525,28 @@ def note_edit(request: HttpRequest, note_id: int) -> HttpResponse:
         return HttpResponse(_html_shell("Edit note", form))
 
 
-def note_delete(request: HttpRequest) -> HttpResponse:
-    pass
+def note_delete(request: HttpRequest, note_id: int) -> HttpResponse:
+    note = data.get_note(note_id)
+    if note is None:
+        return HttpResponse(_html_shell("404 not found", f"""
+<h1>Can't delete</h1>
+<p class="muted">Note id: {escape(str(note_id))} not found</p>
+<p><a href="{escape(reverse("notes_list"))}">Return to Nodes List</a></p>
+"""), status=404)
+    if request.method == "POST":
+        data.delete_note(note_id)
+        return redirect("notes_list")
+
+    body = f"""
+<h1>Delete note?</h1>
+<p>{escape(note["title"])}</p>
+<form method="post" action="{escape(reverse("note_delete", kwargs={"note_id": note_id}))}">
+    {_csrf_field(request)}
+    <button type="submit">Yes</button>
+    <a class="muted" href="{escape(reverse("note_detail", 
+                                           kwargs={"note_id":note_id}))}">Cancel</a>
+</form>
+"""
+
+    return HttpResponse(_html_shell("Delete note", body))
+

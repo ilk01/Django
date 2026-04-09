@@ -1,0 +1,22 @@
+{% include "notes/_page_header.html" %}
+<h1>{{ page_title }}</h1>
+<ul>
+    {% for note in notes %}
+        <li>
+            <a href="{% url 'notes:note_detail' note.id %}">
+                {{ note.title }}
+            </a>
+            {% if note.category %}
+                <small>Category: {{ note.category }}</small>
+            {% else %}
+                <small>Category is not set</small>
+            {% endif %}
+        </li>
+        {% empty %}
+        <li>No notes yet</li>
+    {% endfor %}
+</ul>
+
+
+
+
