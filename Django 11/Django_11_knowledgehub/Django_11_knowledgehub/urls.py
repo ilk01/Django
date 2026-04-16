@@ -19,11 +19,14 @@ from django.contrib import admin
 from django.urls import path, include
 
 from notes import views
+from feedback import views as feedback_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("notes/", include("notes.urls")),
     path('', views.home, name='home'),
-path("accounts/", include("accounts.urls")),
-
+    path("accounts/", include("accounts.urls")),
+    path("feedback/", include("feedback.urls")),
+    path('contact/', feedback_views.contact_view, name='contact'),
+    path('contact/success/', feedback_views.contact_success_view, name='contact_success'),
 ]
