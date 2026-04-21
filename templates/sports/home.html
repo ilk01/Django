@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<h2 class="section-title">Добро пожаловать на Спорт Портал</h2>
+
+<div class="content">
+    <p style="text-align: center; margin-bottom: 25px;">
+        Здесь вы найдете информацию о самых популярных видах спорта.
+        Выбирайте интересующий вас раздел и узнавайте больше о мире спорта.
+    </p>
+
+    <div class="home-grid">
+        <a href="{% url 'football' %}" class="home-card">
+            <h3>Футбол</h3>
+            <p>Самый популярный вид спорта в мире</p>
+        </a>
+        <a href="{% url 'hockey' %}" class="home-card">
+            <h3>Хоккей</h3>
+            <p>Быстрый и зрелищный ледовый спорт</p>
+        </a>
+        <a href="{% url 'basketball' %}" class="home-card">
+            <h3>Баскетбол</h3>
+            <p>Динамичная командная игра</p>
+        </a>
+    </div>
+</div>
+{% endblock %}
