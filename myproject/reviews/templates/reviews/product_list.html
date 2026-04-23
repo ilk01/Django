@@ -1,0 +1,51 @@
+{% extends "reviews/base.html" %}
+
+{% block title %}Products - ReviewHub{% endblock %}
+
+{% block content %}
+<div class="mb-12 text-center">
+    <h1 class="text-4xl font-extrabold mb-4 text-white">Explore Products</h1>
+    <p class="text-slate-400 max-w-2xl mx-auto">Discover high-quality products and read authentic reviews from our community.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    {% for product in page_obj %}
+    <div class="card rounded-2xl p-6 flex flex-col">
+        <div class="flex-grow">
+            <h2 class="text-xl font-bold mb-3 text-blue-300">{{ product.name }}</h2>
+            <p class="text-slate-400 line-clamp-3 mb-6">{{ product.descriptions }}</p>
+        </div>
+        <div class="flex items-center justify-between mt-auto">
+            <span class="text-xs text-slate-500">Added {{ product.created_at|date:"M d, Y" }}</span>
+            <a href="{% url 'product_detail' product.id %}" class="btn-primary text-white px-5 py-2 rounded-lg text-sm font-semibold transition shadow-md">
+                View Details
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full text-center py-20 bg-slate-800/50 rounded-3xl border-2 border-dashed border-slate-700">
+        <i class="fas fa-box-open text-4xl text-slate-600 mb-4"></i>
+        <p class="text-slate-400">No products available at the moment. Check back later!</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination Navigation -->
+{% if page_obj.has_other_pages %}
+<div class="mt-12 flex justify-center space-x-3">
+    {% if page_obj.has_previous %}
+        <a href="?page=1" class="pagination-link px-4 py-2 text-slate-300 rounded-xl text-sm font-medium transition">&laquo; First</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="pagination-link px-4 py-2 text-slate-300 rounded-xl text-sm font-medium transition">Prev</a>
+    {% endif %}
+
+    <span class="pagination-active px-5 py-2 text-white rounded-xl text-sm font-bold shadow-lg">
+        {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="pagination-link px-4 py-2 text-slate-300 rounded-xl text-sm font-medium transition">Next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}" class="pagination-link px-4 py-2 text-slate-300 rounded-xl text-sm font-medium transition">Last &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

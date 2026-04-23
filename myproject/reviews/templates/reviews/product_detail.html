@@ -1,0 +1,139 @@
+{% extends "reviews/base.html" %}
+
+{% block title %}{{ product.name }} - ReviewHub{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Product Section -->
+    <div class="bg-slate-800/50 rounded-3xl p-8 mb-10 border border-slate-700 shadow-xl">
+        <nav class="mb-6 flex items-center text-sm text-slate-500">
+            <a href="{% url 'product_list' %}" class="hover:text-blue-400 transition">Products</a>
+            <i class="fas fa-chevron-right mx-3 text-[10px]"></i>
+            <span class="text-slate-300">{{ product.name }}</span>
+        </nav>
+        
+        <h1 class="text-4xl font-bold mb-4 text-white">{{ product.name }}</h1>
+        <p class="text-slate-300 text-lg leading-relaxed mb-6">{{ product.descriptions }}</p>
+        <div class="text-sm text-slate-500">
+            <i class="far fa-calendar-alt mr-2"></i>Listed on {{ product.created_at|date:"F j, Y" }}
+        </div>
+    </div>
+
+    <!-- Review Submission Form -->
+    <div class="mb-12">
+        <h2 class="text-2xl font-bold mb-6 flex items-center">
+            <i class="fas fa-pen-nib mr-3 text-blue-400"></i>Write a Review
+        </h2>
+        
+        {% if user.is_authenticated %}
+        <div class="bg-slate-800/30 rounded-2xl p-6 border border-slate-700">
+            <form method="post" action="{% url 'add_review' product.id %}" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-2">Your Rating (1-5)</label>
+                    <select name="rating" required class="bg-slate-900 border border-slate-700 text-white rounded-lg block w-full p-2.5 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="5">5 - Excellent</option>
+                        <option value="4">4 - Good</option>
+                        <option value="3">3 - Average</option>
+                        <option value="2">2 - Poor</option>
+                        <option value="1">1 - Terrible</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-2">Your Thoughts</label>
+                    <textarea name="text" rows="4" required class="bg-slate-900 border border-slate-700 text-white rounded-lg block w-full p-2.5 focus:ring-blue-500 focus:border-blue-500" placeholder="What did you think of this product?"></textarea>
+                </div>
+                <button type="submit" class="btn-primary text-white font-bold py-3 px-6 rounded-xl shadow-lg transition transform hover:scale-[1.02] active:scale-[0.98]">
+                    Submit Review
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div class="bg-blue-900/20 border border-blue-800/50 rounded-2xl p-6 text-center">
+            <p class="text-blue-300 mb-4">Please log in to share your experience with this product.</p>
+            <a href="{% url 'login' %}" class="inline-block bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg transition">
+                Log In
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Reviews List -->
+    <div>
+        <h2 class="text-2xl font-bold mb-6 flex items-center">
+            <i class="fas fa-comments mr-3 text-blue-400"></i>Community Reviews
+        </h2>
+        
+        <div class="space-y-6">
+            {% for review in reviews %}
+            <div class="bg-slate-800/40 rounded-2xl p-6 border border-slate-700/50">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-user text-slate-400"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-white">{{ review.user.username }}</div>
+                            <div class="text-xs text-slate-500">{{ review.created_at|date:"M d, Y" }}</div>
+                        </div>
+                    </div>
+                    <div class="flex">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= review.rating %}
+                                <i class="fas fa-star star-rating text-sm mr-0.5"></i>
+                            {% else %}
+                                <i class="far fa-star text-sm text-slate-600 mr-0.5"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <p class="text-slate-300 leading-relaxed mb-4">{{ review.text }}</p>
+
+                {% if user == review.user %}
+                <div class="flex space-x-3 border-t border-slate-700/50 pt-4">
+                    <button onclick="toggleEdit('{{ review.id }}')" class="text-sm text-blue-400 hover:text-blue-300 transition flex items-center">
+                        <i class="fas fa-edit mr-1.5"></i> Edit
+                    </button>
+                    <form action="{% url 'delete_review' review.id %}" method="post" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-sm text-red-400 hover:text-red-300 transition flex items-center" onclick="return confirm('Delete this review?')">
+                            <i class="fas fa-trash-alt mr-1.5"></i> Delete
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Hidden Edit Form -->
+                <div id="edit-form-{{ review.id }}" class="hidden mt-4 pt-4 border-t border-slate-700/50">
+                    <form method="post" action="{% url 'edit_review' review.id %}" class="space-y-4">
+                        {% csrf_token %}
+                        <select name="rating" class="bg-slate-900 border border-slate-700 text-white rounded-lg block w-full p-2.5">
+                            {% for i in "12345" %}
+                                <option value="{{ forloop.counter }}" {% if review.rating == forloop.counter %}selected{% endif %}>{{ forloop.counter }} stars</option>
+                            {% endfor %}
+                        </select>
+                        <textarea name="text" rows="3" class="bg-slate-900 border border-slate-700 text-white rounded-lg block w-full p-2.5">{{ review.text }}</textarea>
+                        <div class="flex space-x-2">
+                            <button type="submit" class="bg-green-600 hover:bg-green-500 text-white text-sm font-bold py-2 px-4 rounded-lg">Save</button>
+                            <button type="button" onclick="toggleEdit('{{ review.id }}')" class="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-2 px-4 rounded-lg">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="text-center py-12 bg-slate-800/20 rounded-2xl border border-dashed border-slate-700">
+                <p class="text-slate-500 italic">No reviews yet. Be the first to review this product!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleEdit(id) {
+        const form = document.getElementById(`edit-form-${id}`);
+        form.classList.toggle('hidden');
+    }
+</script>
+{% endblock %}

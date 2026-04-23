@@ -1,0 +1,44 @@
+{% extends 'reviews/base.html' %}
+
+{% block title %}Login - ReviewHub{% endblock %}
+
+{% block content %}
+<div class='max-w-md mx-auto'>
+    <div class='bg-slate-800/50 rounded-3xl p-8 border border-slate-700 shadow-xl'>
+        <h2 class='text-3xl font-bold mb-6 text-center text-white'>Welcome Back</h2>
+        <form method='post' class='space-y-6'>
+            {% csrf_token %}
+            <div>
+                <label class='block text-sm font-medium text-slate-400 mb-2'>Username</label>
+                {{ form.username }}
+            </div>
+            <div>
+                <label class='block text-sm font-medium text-slate-400 mb-2'>Password</label>
+                {{ form.password }}
+            </div>
+            <button type='submit' class='w-full btn-primary text-white font-bold py-3 px-6 rounded-xl shadow-lg transition transform hover:scale-[1.02] active:scale-[0.98]'>
+                Login
+            </button>
+        </form>
+        <p class='mt-6 text-center text-slate-500 text-sm'>
+            Don''t have an account? Contact admin for access.
+        </p>
+    </div>
+</div>
+
+<style>
+    input {
+        background-color: #0f172a !important;
+        border: 1px solid #334155 !important;
+        color: white !important;
+        border-radius: 0.5rem !important;
+        display: block !important;
+        width: 100% !important;
+        padding: 0.625rem !important;
+    }
+    input:focus {
+        border-color: #3b82f6 !important;
+        outline: none !important;
+    }
+</style>
+{% endblock %}
