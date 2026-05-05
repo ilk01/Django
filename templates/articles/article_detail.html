@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-4">
+    <div class="lg:w-3/4">
+        <article class="bg-white dark:bg-[#2a2a2a] p-8 shadow-sm border border-gray-100 dark:border-gray-800 transition-colors duration-300">
+            <div class="flex items-center text-xs text-[#707e8c] dark:text-gray-400 mb-6">
+                <a href="{% url 'profile' article.author.username %}" class="font-bold text-gray-900 dark:text-gray-100 mr-2 hover:text-[#548eaa] transition-colors">
+                    {{ article.author.username }}
+                </a>
+                <span>{{ article.created_at|date:"d.m.Y в H:i" }}</span>
+            </div>
+            <h1 class="text-3xl font-bold mb-6 text-[#333] dark:text-gray-100 leading-tight">{{ article.title }}</h1>
+            {% if article.category %}
+                <div class="flex flex-wrap gap-2 mb-8">
+                    <span class="bg-gray-100 dark:bg-[#1a1a1a] text-[#707e8c] dark:text-gray-400 text-xs px-2 py-1 rounded">{{ article.category.name }}</span>
+                </div>
+            {% endif %}
+            {% if article.image %}
+                <img src="{{ article.image.url }}" alt="{{ article.title }}" class="w-full h-auto mb-8 rounded shadow-sm">
+            {% endif %}
+            <div id="article-content" class="article-content text-[16px] leading-relaxed text-[#333] dark:text-gray-300 space-y-6 break-words overflow-hidden">
+                {% if content_blocks %}
+                    {% for block in content_blocks %}
+                        {% if block.type == 'paragraph' %}
+                            <p>{{ block.data.text|safe }}</p>
+                        {% elif block.type == 'header' %}
+                            <h{{ block.data.level }} class="font-bold text-xl">{{ block.data.text|safe }}</h{{ block.data.level }}>
+                        {% elif block.type == 'list' %}
+                            <ul class="list-disc pl-6 space-y-2">
+                                {% for item in block.data.items %}
+                                    <li>{{ item|safe }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% elif block.type == 'table' %}
+                            <div class="overflow-x-auto my-6">
+                                <table class="min-w-full border-collapse border border-gray-200">
+                                    {% for row in block.data.content %}
+                                        <tr>
+                                            {% for cell in row %}
+                                                <td class="border border-gray-200 p-2">{{ cell|safe }}</td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                </table>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="whitespace-pre-wrap">{{ article.content }}</div>
+                {% endif %}
+            </div>
+            <div class="flex items-center justify-between border-t border-gray-100 dark:border-gray-800 mt-12 pt-6">
+                <div class="flex items-center space-x-8 text-[#707e8c] dark:text-gray-400">
+                    <div class="flex items-center space-x-2">
+                        {% if user.is_authenticated %}
+                            <button onclick="vote('{{ article.slug }}', '1', this)" class="vote-up hover:text-green-500 transition-colors {% if user_vote.value == 1 %}text-green-600{% endif %}">
+                                <i class="fas fa-chevron-up text-lg"></i>
+                            </button>
+                        {% endif %}
+                        <span id="balance-{{ article.slug }}" class="font-bold text-lg {% with balance=article.total_likes|add:article.total_dislikes %}{% if balance > 0 %}text-green-600{% elif balance < 0 %}text-red-600{% endif %}{% endwith %}">
+                            {{ article.total_likes|add:article.total_dislikes|default:0 }}
+                        </span>
+                        {% if user.is_authenticated %}
+                            <button onclick="vote('{{ article.slug }}', '-1', this)" class="vote-down hover:text-red-500 transition-colors {% if user_vote.value == -1 %}text-red-600{% endif %}">
+                                <i class="fas fa-chevron-down text-lg"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="far fa-eye"></i>
+                        <span>{{ article.view_count }}</span>
+                    </div>
+                    {% if user.is_authenticated %}
+                        <button onclick="toggleBookmark('{{ article.slug }}', this)" class="bookmark-btn flex items-center space-x-2 hover:text-[#548eaa] transition-colors {% if is_bookmarked %}text-[#548eaa]{% endif %}">
+                            <i class="{% if is_bookmarked %}fas{% else %}far{% endif %} fa-bookmark"></i>
+                            <span class="bookmark-count">{{ article.bookmarks.count }}</span>
+                        </button>
+                    {% endif %}
+                </div>
+                <div class="flex items-center space-x-6 text-[#707e8c] dark:text-gray-400">
+                    <div class="flex items-center space-x-1" id="rating-container" onmouseleave="resetStars()">
+                        {% for i in "12345" %}
+                            {% with star_num=forloop.counter %}
+                            <button onclick="rate('{{ star_num }}')" 
+                                    onmouseenter="highlightStars('{{ star_num }}')" 
+                                    class="rate-btn transition-colors {% if user_rating.score >= star_num %}text-yellow-400{% else %}text-gray-300{% endif %} hover:text-yellow-400" 
+                                    data-score="{{ star_num }}">
+                                <i class="fas fa-star text-sm"></i>
+                            </button>
+                            {% endwith %}
+                        {% endfor %}
+                        <div class="w-8 ml-2 flex items-center">
+                            <span id="hover-score" class="text-sm font-bold text-yellow-500 hidden"></span>
+                            <span id="avg-rating" class="text-sm font-bold text-[#707e8c]">{{ article.average_rating|floatformat:1 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-6 text-[#707e8c]">
+                    <button onclick="toggleBookmark()" id="bookmark-btn" class="flex items-center space-x-1 hover:text-[#548eaa] transition-colors {% if is_bookmarked %}text-[#548eaa]{% endif %}">
+                        <i id="bookmark-icon" class="{% if is_bookmarked %}fas{% else %}far{% endif %} fa-bookmark text-lg"></i>
+                        <span id="bookmark-count" class="text-sm font-medium">{{ article.bookmarks.count }}</span>
+                    </button>
+                    
+                    <div class="flex items-center space-x-1" title="Просмотры">
+                        <i class="far fa-eye text-lg"></i>
+                        <span class="text-sm font-medium">{{ article.view_count }}</span>
+                    </div>
+
+                    {% if user == article.author or user.is_staff %}
+                        <a href="{% url 'article_update' article.slug %}" class="hover:text-[#548eaa] transition-colors" title="Редактировать">
+                            <i class="fas fa-pencil-alt text-lg"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+
+        <div class="mt-4 bg-white dark:bg-[#2a2a2a] p-5 lg:p-8 border border-gray-100 dark:border-gray-800 shadow-sm transition-colors duration-300">
+            <h3 class="text-[18px] font-bold mb-6 text-[#333] dark:text-gray-100">Комментарии <span class="text-[#707e8c] dark:text-gray-400 font-normal">{{ comments.count }}</span></h3>
+            
+            {% if user.is_authenticated %}
+                <div class="mb-10">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-8 h-8 rounded-sm bg-[#548eaa] text-white flex items-center justify-center font-bold text-xs">
+                            {{ user.username|slice:":1"|upper }}
+                        </div>
+                        <span class="text-[14px] font-bold text-[#333] dark:text-gray-100">{{ user.username }}</span>
+                    </div>
+                    <form id="comment-form" action="{% url 'add_comment' article.slug %}" method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <textarea name="content" id="id_content" rows="4" 
+                                      class="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a1a1a] dark:text-gray-300 rounded focus:border-[#548eaa] focus:outline-none transition-colors"
+                                      placeholder="Напишите комментарий..."></textarea>
+                        </div>
+                        <button type="submit" class="bg-[#82b465] hover:bg-[#75a45a] text-white font-bold py-2 px-6 rounded text-sm transition-colors shadow-sm">
+                            Отправить
+                        </button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="bg-[#f5f9fa] dark:bg-[#1a1a1a] p-4 rounded-sm text-sm text-[#707e8c] dark:text-gray-400 mb-8 border dark:border-gray-800">
+                    Чтобы оставить комментарий, вам нужно <a href="{% url 'login' %}" class="text-[#548eaa] hover:underline">войти</a> или <a href="{% url 'register' %}" class="text-[#548eaa] hover:underline">зарегистрироваться</a>.
+                </div>
+            {% endif %}
+
+            <div id="comments-list" class="space-y-8">
+                {% for comment in comments %}
+                    <div class="border-t border-gray-50 dark:border-gray-800 pt-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-3 mb-3">
+                            <a href="{% url 'profile' comment.author.username %}" class="w-8 h-8 rounded bg-[#548eaa] flex items-center justify-center text-white font-bold text-sm">
+                                {{ comment.author.username|slice:":1"|upper }}
+                            </a>
+                            <a href="{% url 'profile' comment.author.username %}" class="font-bold text-sm text-[#333] dark:text-gray-100 hover:text-[#548eaa] transition-colors">
+                                {{ comment.author.username }}
+                            </a>
+                            <span class="text-xs text-[#707e8c] dark:text-gray-500">{{ comment.created_at|date:"d.m.Y в H:i" }}</span>
+                        </div>
+                        </div>
+                        <div class="text-[15px] leading-relaxed text-[#333] dark:text-gray-300 pl-9">
+                            {{ comment.content|linebreaks }}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div id="no-comments-message" class="py-10 text-center text-[#707e8c]">
+                        Здесь пока нет ни одного комментария, вы можете стать первым!
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <aside class="lg:w-1/4 space-y-4">
+    </aside>
+</div>
+
+<script>
+async function apiCall(url, method = 'GET', body = null) {
+    const options = {
+        method,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    };
+    if (body) options.body = body;
+    const response = await fetch(url, options);
+    return await response.json();
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+async function vote(value) {
+    const data = await apiCall(`/article/{{ article.slug }}/vote/${value}/`);
+    const balance = document.getElementById('vote-balance');
+    balance.innerText = data.balance;
+    balance.className = 'font-bold text-[16px] ' + (data.balance > 0 ? 'text-green-600' : (data.balance < 0 ? 'text-red-600' : ''));
+    const likes = document.getElementById('likes-detail');
+    const dislikes = document.getElementById('dislikes-detail');
+    if (likes) likes.innerHTML = `<i class="fas fa-thumbs-up"></i> ${data.total_likes}`;
+    if (dislikes) dislikes.innerHTML = `<i class="fas fa-thumbs-down"></i> ${data.total_dislikes}`;
+    document.querySelectorAll('.vote-btn').forEach(btn => {
+        btn.classList.remove('text-green-600', 'text-red-600');
+        if (btn.dataset.value === data.user_vote.toString()) {
+            btn.classList.add(data.user_vote === 1 ? 'text-green-600' : 'text-red-600');
+        }
+    });
+}
+
+async function rate(score) {
+    const data = await apiCall(`/article/{{ article.slug }}/rate/${score}/`);
+    document.getElementById('avg-rating').innerText = data.average_rating;
+    userScore = data.user_score;
+    updateStars(userScore);
+}
+
+let userScore = "{% if user_rating %}{{ user_rating.score }}{% else %}0{% endif %}";
+userScore = parseInt(userScore);
+
+function highlightStars(score) {
+    const stars = document.querySelectorAll('.rate-btn');
+    const hoverScore = document.getElementById('hover-score');
+    const avgRating = document.getElementById('avg-rating');
+    
+    if (hoverScore) {
+        hoverScore.innerText = score;
+        hoverScore.classList.remove('hidden');
+    }
+    if (avgRating) avgRating.classList.add('hidden');
+
+    stars.forEach(star => {
+        const starScore = parseInt(star.dataset.score);
+        star.classList.toggle('text-yellow-400', starScore <= score);
+        star.classList.toggle('text-gray-300', starScore > score);
+    });
+}
+
+function resetStars() {
+    const hoverScore = document.getElementById('hover-score');
+    const avgRating = document.getElementById('avg-rating');
+    
+    if (hoverScore) hoverScore.classList.add('hidden');
+    if (avgRating) avgRating.classList.remove('hidden');
+    
+    updateStars(userScore);
+}
+
+function updateStars(score) {
+    const stars = document.querySelectorAll('.rate-btn');
+    stars.forEach(star => {
+        const starScore = parseInt(star.dataset.score);
+        if (starScore <= score) {
+            star.classList.remove('text-gray-300');
+            star.classList.add('text-yellow-400');
+        } else {
+            star.classList.remove('text-yellow-400');
+            star.classList.add('text-gray-300');
+        }
+    });
+}
+
+async function toggleBookmark() {
+    const data = await apiCall(`/article/{{ article.slug }}/bookmark/`);
+    const btn = document.getElementById('bookmark-btn');
+    const icon = document.getElementById('bookmark-icon');
+    document.getElementById('bookmark-count').innerText = data.count;
+    if (data.is_bookmarked) {
+        btn.classList.add('text-[#548eaa]');
+        icon.classList.replace('far', 'fas');
+    } else {
+        btn.classList.remove('text-[#548eaa]');
+        icon.classList.replace('fas', 'far');
+    }
+}
+
+const commentForm = document.getElementById('comment-form');
+if (commentForm) {
+    commentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(commentForm);
+        const url = commentForm.action;
+        try {
+            const data = await apiCall(url, 'POST', formData);
+            if (data.status === 'success') {
+                commentForm.querySelector('textarea').value = '';
+                const noCommentsMsg = document.getElementById('no-comments-message');
+                if (noCommentsMsg) noCommentsMsg.remove();
+                const commentsList = document.getElementById('comments-list');
+                const newComment = document.createElement('div');
+                newComment.className = 'border-t border-gray-50 dark:border-gray-800 pt-6';
+                newComment.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 rounded-sm bg-[#548eaa] text-white flex items-center justify-center font-bold text-[10px]">
+                                ${data.avatar_letter}
+                            </div>
+                            <span class="text-[13px] font-bold text-[#333] dark:text-gray-100">${data.username}</span>
+                            <span class="text-[12px] text-[#707e8c] dark:text-gray-400">${data.created_at}</span>
+                        </div>
+                    </div>
+                    <div class="text-[15px] leading-relaxed text-[#333] dark:text-gray-300 pl-9">
+                        ${data.content.replace(/\n/g, '<br>')}
+                    </div>
+                `;
+                commentsList.appendChild(newComment);
+                const countBadge = document.querySelector('h3 span.text-[#707e8c]');
+                if (countBadge) {
+                    const currentCount = parseInt(countBadge.textContent);
+                    countBadge.textContent = currentCount + 1;
+                }
+            }
+        } catch (error) {
+            console.error('Error submitting comment:', error);
+        }
+    });
+}
+</script>
+{% endblock %}

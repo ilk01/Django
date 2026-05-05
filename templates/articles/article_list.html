@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-4">
+    <div class="lg:w-3/4">
+        {% if request.GET.feed == 'all' or request.GET.category or request.GET.sort or request.GET.q %}
+            <div class="bg-white dark:bg-[#2a2a2a] border-b border-gray-200 dark:border-gray-800 p-6 mb-4 shadow-sm transition-colors duration-300">
+                <h1 class="text-2xl font-bold text-[#333] dark:text-gray-100 mb-6">
+                    {% if request.GET.q %}
+                        Результаты поиска: "{{ request.GET.q }}"
+                    {% else %}
+                        Все потоки
+                    {% endif %}
+                </h1>
+                <nav class="flex space-x-6 text-[13px] font-bold uppercase tracking-wider text-[#707e8c] dark:text-gray-400 border-b border-gray-100 dark:border-gray-800 mb-6 overflow-x-auto whitespace-nowrap">
+                    <a href="{% url 'article_list' %}?feed=all&type=article" class="{% if not request.GET.type or request.GET.type == 'article' %}text-black dark:text-white border-b-2 border-[#548eaa]{% else %}hover:text-black dark:hover:text-white{% endif %} pb-4 transition-colors">Статьи <span class="ml-1 text-[11px] text-[#548eaa] font-normal">+{{ articles_count }}</span></a>
+                    <a href="{% url 'article_list' %}?feed=all&type=post" class="{% if request.GET.type == 'post' %}text-black dark:text-white border-b-2 border-[#548eaa]{% else %}hover:text-black dark:hover:text-white{% endif %} pb-4 transition-colors">Посты <span class="ml-1 text-[11px] text-[#548eaa] font-normal">+{{ posts_count }}</span></a>
+                    <a href="{% url 'article_list' %}?feed=all&type=news" class="{% if request.GET.type == 'news' %}text-black dark:text-white border-b-2 border-[#548eaa]{% else %}hover:text-black dark:hover:text-white{% endif %} pb-4 transition-colors">Новости <span class="ml-1 text-[11px] text-[#548eaa] font-normal">+{{ news_count }}</span></a>
+                </nav>
+                <form method="get" class="space-y-6">
+                    <input type="hidden" name="feed" value="{{ request.GET.feed|default:'all' }}">
+                    <input type="hidden" name="type" value="{{ request.GET.type|default:'article' }}">
+                    {% if request.GET.category %}<input type="hidden" name="category" value="{{ request.GET.category }}">{% endif %}
+                    {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
+                    <div class="flex flex-wrap items-center gap-8">
+                        <div>
+                            <div class="text-[11px] font-bold text-[#707e8c] dark:text-gray-400 uppercase tracking-widest mb-3 text-xs">Показать</div>
+                            <div class="flex flex-wrap gap-1">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="sort" value="new" class="hidden peer" {% if current_sort == 'new' %}checked{% endif %}>
+                                    <span class="peer-checked:bg-[#548eaa] peer-checked:text-white border border-gray-200 dark:border-gray-700 text-[11px] px-3 py-1 rounded hover:bg-gray-50 dark:hover:bg-[#333] inline-block transition-colors dark:text-gray-300">Новые</span>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="sort" value="popular" class="hidden peer" {% if current_sort == 'popular' %}checked{% endif %}>
+                                    <span class="peer-checked:bg-[#548eaa] peer-checked:text-white border border-gray-200 dark:border-gray-700 text-[11px] px-3 py-1 rounded hover:bg-gray-50 dark:hover:bg-[#333] inline-block transition-colors dark:text-gray-300">Лучшие</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="bg-[#82b465] hover:bg-[#75a45a] text-white font-bold py-2 px-6 rounded text-[13px] transition-colors shadow-sm uppercase tracking-wide">Применить</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        {% else %}
+            <div class="bg-white dark:bg-[#2a2a2a] border-b border-gray-200 dark:border-gray-800 p-6 mb-4 shadow-sm transition-colors duration-300">
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-bold text-[#333] dark:text-gray-100">Моя лента</h1>
+                </div>
+                <nav class="flex space-x-6 text-[13px] font-bold uppercase tracking-wider text-[#707e8c] dark:text-gray-400 border-b border-gray-100 dark:border-gray-800 mb-6 overflow-x-auto whitespace-nowrap">
+                    <a href="{% url 'article_list' %}?feed=my&type=article" class="{% if not request.GET.type or request.GET.type == 'article' %}text-black dark:text-white border-b-2 border-[#548eaa]{% else %}hover:text-black dark:hover:text-white{% endif %} pb-4 transition-colors">Статьи</a>
+                    <a href="{% url 'article_list' %}?feed=my&type=post" class="{% if request.GET.type == 'post' %}text-black dark:text-white border-b-2 border-[#548eaa]{% else %}hover:text-black dark:hover:text-white{% endif %} pb-4 transition-colors">Посты</a>
+                    <a href="{% url 'article_list' %}?feed=my&type=news" class="{% if request.GET.type == 'news' %}text-black dark:text-white border-b-2 border-[#548eaa]{% else %}hover:text-black dark:hover:text-white{% endif %} pb-4 transition-colors">Новости</a>
+                </nav>
+                <form method="get" class="space-y-6">
+                    <input type="hidden" name="feed" value="my">
+                    <input type="hidden" name="type" value="{{ request.GET.type|default:'article' }}">
+                    <div class="flex flex-wrap items-center gap-8">
+                        <div>
+                            <div class="text-[11px] font-bold text-[#707e8c] dark:text-gray-400 uppercase tracking-widest mb-3">Тип публикации</div>
+                            <div class="flex flex-wrap gap-3">
+                                <label class="flex items-center space-x-2 text-[13px] cursor-pointer dark:text-gray-300">
+                                    <input type="checkbox" name="show_articles" {% if request.GET.show_articles == 'on' or not request.GET %}checked{% endif %} class="accent-[#548eaa]"> 
+                                    <span>Статьи</span>
+                                </label>
+                                <label class="flex items-center space-x-2 text-[13px] cursor-pointer dark:text-gray-300">
+                                    <input type="checkbox" name="show_posts" {% if request.GET.show_posts == 'on' %}checked{% endif %} class="accent-[#548eaa]"> 
+                                    <span>Посты</span>
+                                </label>
+                                <label class="flex items-center space-x-2 text-[13px] cursor-pointer dark:text-gray-300">
+                                    <input type="checkbox" name="show_news" {% if request.GET.show_news == 'on' %}checked{% endif %} class="accent-[#548eaa]"> 
+                                    <span>Новости</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="bg-[#82b465] hover:bg-[#75a45a] text-white font-bold py-2 px-6 rounded text-[13px] transition-colors shadow-sm uppercase tracking-wide">Применить</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="text-[11px] font-bold text-[#548eaa] uppercase tracking-widest mb-4 pl-4 border-l-4 border-[#548eaa]">Статьи</div>
+        {% endif %}
+        <div class="space-y-4">
+            {% for article in articles %}
+                <article class="bg-white dark:bg-[#2a2a2a] p-5 shadow-sm border border-gray-100 dark:border-gray-800 transition-colors duration-300">
+                    <div class="flex items-center text-xs text-[#707e8c] dark:text-gray-400 mb-3">
+                        <a href="{% url 'profile' article.author.username %}" class="font-bold text-gray-900 dark:text-gray-100 mr-2 hover:text-[#548eaa] transition-colors">
+                            {{ article.author.username }}
+                        </a>
+                        <span>{{ article.created_at|date:"d.m.Y в H:i" }}</span>
+                    </div>
+                    <h2 class="text-xl font-bold mb-3">
+                        <a href="{% url 'article_detail' article.slug %}" class="hover:text-[#548eaa] dark:text-gray-100 dark:hover:text-[#548eaa] transition-colors leading-snug">
+                            {{ article.title }}
+                        </a>
+                    </h2>
+                    {% if article.category %}
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <span class="text-xs text-[#707e8c] dark:text-gray-400 hover:text-[#548eaa] dark:hover:text-[#548eaa] cursor-pointer">{{ article.category.name }}</span>
+                        </div>
+                    {% endif %}
+                    {% if article.image %}
+                        <img src="{{ article.image.url }}" alt="{{ article.title }}" class="w-full max-h-[400px] object-cover mb-4">
+                    {% endif %}
+                    <div class="text-[#333] dark:text-gray-200 text-sm md:text-base leading-relaxed mb-6 break-words overflow-hidden line-clamp-3">
+                        {{ article.content|truncatewords:60 }}
+                    </div>
+                    <div class="flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-4">
+                        <a href="{% url 'article_detail' article.slug %}" class="text-sm font-bold text-[#548eaa] border border-[#548eaa] px-3 py-1.5 rounded hover:bg-[#548eaa] hover:text-white transition-colors">
+                            Читать далее
+                        </a>
+                        <div class="flex items-center space-x-6 text-[#707e8c] dark:text-gray-400">
+                            <a href="{% url 'article_detail' article.slug %}#comments-list" class="flex items-center space-x-1 hover:text-[#548eaa] dark:hover:text-[#548eaa] transition-colors" title="Комментарии">
+                                <i class="far fa-comment"></i>
+                                <span>{{ article.comments.count }}</span>
+                            </a>
+                            <div class="flex items-center space-x-1">
+                                {% if user.is_authenticated %}
+                                    <button onclick="vote('{{ article.slug }}', '1', this)" class="vote-up hover:text-green-500 transition-colors">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </button>
+                                {% else %}
+                                    <a href="{% url 'login' %}" class="hover:text-green-500 transition-colors">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </a>
+                                {% endif %}
+                                <span id="balance-{{ article.slug }}" class="vote-balance font-bold {% with balance=article.total_likes|add:article.total_dislikes %}{% if balance > 0 %}text-green-600 dark:text-green-400{% elif balance < 0 %}text-red-600 dark:text-red-400{% endif %}{% endwith %}">
+                                    {{ article.total_likes|add:article.total_dislikes|default:0 }}
+                                </span>
+                                {% if user.is_authenticated %}
+                                    <button onclick="vote('{{ article.slug }}', '-1', this)" class="vote-down hover:text-red-500 transition-colors">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                {% else %}
+                                    <a href="{% url 'login' %}" class="hover:text-red-500 transition-colors">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="flex items-center space-x-4 text-xs">
+                                <span class="text-green-600 dark:text-green-400" id="likes-{{ article.slug }}"><i class="fas fa-thumbs-up"></i> {{ article.total_likes }}</span>
+                                <span class="text-red-600 dark:text-red-400" id="dislikes-{{ article.slug }}"><i class="fas fa-thumbs-down"></i> {{ article.total_dislikes }}</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                {% if user.is_authenticated %}
+                                    <button onclick="toggleBookmark('{{ article.slug }}', this)" class="bookmark-btn hover:text-[#548eaa] dark:hover:text-[#548eaa] transition-colors">
+                                        <i class="far fa-bookmark"></i>
+                                        <span class="bookmark-count">{{ article.bookmarks.count }}</span>
+                                    </button>
+                                {% else %}
+                                    <a href="{% url 'login' %}" class="hover:text-[#548eaa] dark:hover:text-[#548eaa] transition-colors">
+                                        <i class="far fa-bookmark"></i>
+                                        <span>{{ article.bookmarks.count }}</span>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="bg-white dark:bg-[#2a2a2a] p-8 text-center border border-gray-100 dark:border-gray-800 transition-colors duration-300">
+                    <p class="text-gray-500 dark:text-gray-400 italic">Публикаций пока нет.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <aside class="lg:w-1/4">
+        <div class="bg-white dark:bg-[#2a2a2a] p-4 shadow-sm border border-gray-100 dark:border-gray-800 sticky top-[70px] transition-colors duration-300">
+            <h3 class="text-sm font-bold uppercase tracking-widest text-[#707e8c] dark:text-gray-400 mb-4 border-b dark:border-gray-800 pb-2">Потоки</h3>
+            <ul class="space-y-3">
+                <li>
+                    <a href="{% url 'article_list' %}" class="text-[14px] {% if not request.GET.category %}text-[#548eaa] font-bold{% else %}text-[#333] dark:text-gray-300 hover:text-[#548eaa] dark:hover:text-[#548eaa]{% endif %}">Все подряд</a>
+                </li>
+                {% for category in categories %}
+                    <li>
+                        <a href="?category={{ category.slug }}" class="text-[14px] {% if request.GET.category == category.slug %}text-[#548eaa] font-bold{% else %}text-[#333] dark:text-gray-300 hover:text-[#548eaa] dark:hover:text-[#548eaa]{% endif %}">
+                            {{ category.name }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </aside>
+</div>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+async function apiCall(url) {
+    const response = await fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    });
+    return await response.json();
+}
+
+async function vote(slug, value, btn) {
+    const data = await apiCall(`/article/${slug}/vote/${value}/`);
+    const balance = document.getElementById(`balance-${slug}`);
+    balance.innerText = data.balance;
+    balance.className = 'vote-balance font-bold ' + (data.balance > 0 ? 'text-green-600' : (data.balance < 0 ? 'text-red-600' : ''));
+    const likes = document.getElementById(`likes-${slug}`);
+    const dislikes = document.getElementById(`dislikes-${slug}`);
+    if (likes) likes.innerHTML = `<i class="fas fa-thumbs-up"></i> ${data.total_likes}`;
+    if (dislikes) dislikes.innerHTML = `<i class="fas fa-thumbs-down"></i> ${data.total_dislikes}`;
+}
+
+async function toggleBookmark(slug, btn) {
+    const data = await apiCall(`/article/${slug}/bookmark/`);
+    const icon = btn.querySelector('i');
+    const count = btn.querySelector('.bookmark-count');
+    count.innerText = data.count;
+    if (data.is_bookmarked) {
+        btn.classList.add('text-[#548eaa]');
+        icon.classList.replace('far', 'fas');
+    } else {
+        btn.classList.remove('text-[#548eaa]');
+        icon.classList.replace('fas', 'far');
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load tailwind_filters %}
+
+{% block content %}
+<div class="max-w-[1200px] mx-auto px-4 py-6">
+    <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Main Editor Column -->
+        <div class="lg:w-2/3">
+            <div class="bg-white dark:bg-[#2a2a2a] border border-gray-100 dark:border-gray-800 shadow-sm min-h-screen transition-colors duration-300">
+                <!-- Header -->
+                <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-[#2a2a2a] sticky top-[50px] z-40 transition-colors duration-300">
+                    <h1 class="text-lg font-bold text-[#333] dark:text-gray-100">{% if object %}Редактирование статьи{% else %}Создание статьи{% endif %}</h1>
+                </div>
+
+                <form id="article-form" method="post" enctype="multipart/form-data" class="p-6 lg:p-10">
+                    {% csrf_token %}
+                    
+                    <!-- Author Info -->
+                    <div class="flex items-center space-x-3 mb-8">
+                        <div class="w-6 h-6 bg-[#548eaa] rounded-sm text-white flex items-center justify-center font-bold text-[10px]">
+                            {{ user.username|slice:":1"|upper }}
+                        </div>
+                        <div class="text-[13px] font-bold text-[#333] dark:text-gray-100">{{ user.username }}</div>
+                        <div class="text-[12px] text-[#707e8c] dark:text-gray-400">Никогда не публиковалось</div>
+                    </div>
+
+                    <!-- Title Input -->
+                    <div class="mb-6">
+                        <textarea name="title" id="id_title" placeholder="Заголовок" 
+                            class="w-full text-[28px] lg:text-[32px] font-bold placeholder-[#ccc] dark:placeholder-gray-600 bg-transparent dark:text-gray-100 border-none focus:ring-0 resize-none h-auto overflow-hidden p-0 leading-tight"
+                            oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"'>{{ form.title.value|default:"" }}</textarea>
+                    </div>
+
+                    <!-- Category and Image -->
+                    <div class="flex flex-wrap gap-4 mb-8">
+                        <div class="w-full lg:w-1/3">
+                            <label class="block text-[11px] font-bold uppercase tracking-widest text-[#707e8c] dark:text-gray-400 mb-2">Категория</label>
+                            {{ form.category }}
+                        </div>
+                        <div class="w-full lg:w-1/2">
+                            <label class="block text-[11px] font-bold uppercase tracking-widest text-[#707e8c] dark:text-gray-400 mb-2">Обложка</label>
+                            {{ form.image }}
+                        </div>
+                    </div>
+
+                    <!-- Description/Content Area -->
+                    <div class="mb-8">
+                        <label class="block text-[11px] font-bold uppercase tracking-widest text-[#707e8c] dark:text-gray-400 mb-2">Описание</label>
+                        <textarea name="content" id="id_content" placeholder="Текст статьи" 
+                            class="w-full min-h-[400px] text-[16px] leading-relaxed placeholder-[#ccc] dark:placeholder-gray-600 border border-gray-100 dark:border-gray-700 bg-white dark:bg-[#1a1a1a] dark:text-gray-300 p-4 focus:border-[#548eaa] focus:ring-0 rounded-sm transition-colors duration-300">{{ form.content.value|default:"" }}</textarea>
+                    </div>
+
+                    <!-- Footer Submit -->
+                    <div class="mt-12 pt-6 border-t border-gray-100 dark:border-gray-800">
+                        <button type="submit" class="bg-[#548eaa] hover:bg-[#4b7f99] text-white font-bold py-2 px-6 rounded text-sm transition-colors shadow-sm">
+                            {% if user.is_staff %}Опубликовать{% else %}Далее к настройкам{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sidebars Column -->
+        <div class="lg:w-1/3 space-y-4">
+            <!-- Sidebar Block 1: Sandbox Info -->
+            <div class="bg-white dark:bg-[#2a2a2a] border border-gray-100 dark:border-gray-800 shadow-sm p-5 transition-colors duration-300">
+                <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#707e8c] dark:text-gray-400 mb-4">О ПЕСОЧНИЦЕ</h3>
+                <div class="text-[13px] text-[#333] dark:text-gray-300 space-y-4 leading-relaxed">
+                    <p>Это «Песочница» — раздел, в который попадают дебютные публикации пользователей, желающих стать полноправными участниками сообщества.</p>
+                    <p>Если у вас есть <a href="#" class="text-[#548eaa] hover:underline">приглашение</a>, отправьте его автору понравившейся публикации — тогда её смогут прочитать и обсудить все остальные пользователи Хабра.</p>
+                </div>
+            </div>
+
+            <!-- Sidebar Block 2: Author Tips -->
+            <div class="bg-white dark:bg-[#2a2a2a] border border-gray-100 dark:border-gray-800 shadow-sm p-5 transition-colors duration-300">
+                <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#707e8c] dark:text-gray-400 mb-4">ПАМЯТКА АВТОРУ</h3>
+                <ul class="space-y-4 text-[13px] text-[#333] dark:text-gray-300">
+                    <li class="flex items-start space-x-3">
+                        <i class="far fa-check-square text-[#548eaa] mt-1 text-lg"></i>
+                        <span>Соблюдайте <a href="#" class="text-[#548eaa] hover:underline">правила сайта</a></span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i class="far fa-edit text-[#548eaa] mt-1 text-lg"></i>
+                        <span>Следуйте советам и заботливо оформляйте публикации</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i class="far fa-image text-[#548eaa] mt-1 text-lg"></i>
+                        <span>Загружайте картинки меньше 8МБ для тела публикации и меньше 1МБ для обложки публикации</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #id_category, #id_image {
+        width: 100%;
+        padding: 0.4rem;
+        border: 1px solid #edf2f7;
+        border-radius: 2px;
+        font-size: 13px;
+        color: #333;
+        background-color: transparent;
+        transition: all 0.3s ease;
+    }
+    .dark #id_category, .dark #id_image {
+        border-color: #374151;
+        color: #d1d5db;
+    }
+    #id_category:focus, #id_image:focus {
+        border-color: #548eaa;
+        outline: none;
+    }
+</style>
+{% endblock %}
