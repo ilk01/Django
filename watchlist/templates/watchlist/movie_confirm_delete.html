@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Удалить фильм{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate-in">
+    <div class="col-md-5">
+        <div class="glass-card overflow-hidden border-0">
+            <div class="p-4 bg-danger bg-opacity-10 text-center border-bottom border-white-10">
+                <h2 class="h4 mb-0 fw-bold text-danger-glow"><i class="bi bi-exclamation-triangle me-2"></i>ПОДТВЕРЖДЕНИЕ</h2>
+            </div>
+            <div class="p-5 text-center">
+                <p class="text-muted mb-4 lead">Вы собираетесь удалить фильм</p>
+                <h3 class="h2 fw-bold text-white mb-5">"{{ movie.title }}"</h3>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-3">
+                        <button type="submit" class="btn btn-danger-custom btn-custom py-3 fs-6">
+                            Удалить навсегда <i class="bi bi-trash3-fill ms-2"></i>
+                        </button>
+                        <a href="{% url 'movie_list' %}" class="btn btn-outline-secondary btn-custom border-0 text-white-50">Отменить действие</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-danger-custom {
+        background: linear-gradient(135deg, #f87171, #ef4444);
+        border: none;
+        color: white;
+    }
+    .btn-danger-custom:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(248, 113, 113, 0.4);
+        color: white;
+    }
+</style>
+{% endblock %}

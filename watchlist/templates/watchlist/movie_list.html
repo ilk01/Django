@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Мой список фильмов{% endblock %}
+
+{% block content %}
+<div class="animate-in">
+    <!-- Header Section -->
+    <div class="row mb-5 text-center">
+        <div class="col-12">
+            <h1 class="display-3 fw-bold mb-2 letter-spacing-2 text-uppercase">МОЯ КОЛЛЕКЦИЯ</h1>
+            <p class="text-white lead fs-4 opacity-75">Ваш личный архив фильмов.</p>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="row mb-5 justify-content-center">
+        <div class="col-12">
+            <div class="glass-card p-4 shadow-lg border-primary-glow">
+                <form method="get" class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label small text-white text-uppercase fw-bold mb-2 d-block">Фильтр статуса</label>
+                        <select name="status" class="form-select border-0 shadow-sm">
+                            <option value="">Все этапы</option>
+                            {% for value, label in status_choices %}
+                                <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label small text-white text-uppercase fw-bold mb-2 d-block">Поиск жанра</label>
+                        <input type="text" name="genre" class="form-control border-0 shadow-sm" placeholder="Напр: Sci-Fi" value="{{ request.GET.genre }}">
+                    </div>
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary-custom btn-custom flex-grow-1" title="Применить">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <a href="{% url 'movie_list' %}" class="btn btn-outline-secondary btn-custom border-0 text-white" title="Сбросить">
+                            <i class="bi bi-arrow-counterclockwise fs-5"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movies Grid -->
+    <div class="row g-4 mb-5">
+        {% for movie in movies %}
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="glass-card h-100 movie-card overflow-hidden border-0 shadow-hover w-100">
+                    <div class="p-4 d-flex flex-column h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="badge-status 
+                                {% if movie.status == 'watched' %}status-watched
+                                {% elif movie.status == 'watching' %}status-watching
+                                {% else %}status-watchlist{% endif %}">
+                                {{ movie.get_status_display }}
+                            </span>
+                            <div class="rating-badge">
+                                {% if movie.rating %}{{ movie.rating }}{% else %}?{% endif %}
+                            </div>
+                        </div>
+                        <h3 class="h4 mb-2 text-white fw-bold">{{ movie.title }}</h3>
+                        <div class="small mb-4 mt-auto">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-calendar3 me-2 text-primary-accent"></i>
+                                <span class="text-white">{{ movie.release_year }}</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-tag-fill me-2 text-secondary-accent"></i>
+                                <span class="text-white">{{ movie.genre }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top border-white-10 mt-3">
+                            <span class="text-white smaller opacity-75">{{ movie.date_added|date:"d.m.y" }}</span>
+                            <div class="d-flex gap-3">
+                                <a href="{% url 'movie_edit' movie.pk %}" class="text-primary-accent fs-5 hover-scale" title="Правка">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <a href="{% url 'movie_delete' movie.pk %}" class="text-danger-glow fs-5 hover-scale" title="Удалить">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12 text-center py-5">
+                <div class="glass-card p-5 border-0 mx-auto" style="max-width: 800px;">
+                    <div class="empty-state-icon mb-4">
+                        <i class="bi bi-camera-reels display-1 text-primary-accent opacity-50"></i>
+                    </div>
+                    <h2 class="h2 fw-bold text-white mb-3">Архив пуст</h2>
+                    <p class="text-white opacity-75 mb-4 lead">Время добавить первый шедевр в коллекцию.</p>
+                    <a href="{% url 'movie_add' %}" class="btn btn-primary-custom btn-custom px-5 py-3 fs-5">
+                        Добавить фильм <i class="bi bi-plus-lg ms-2"></i>
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination Section -->
+    {% if movies.has_other_pages %}
+    <div class="row mt-5 pb-5">
+        <div class="col-12 d-flex justify-content-center">
+            <nav>
+                <ul class="pagination pagination-lg gap-2">
+                    {% if movies.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link glass-card border-0 text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;" href="?page={{ movies.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.genre %}&genre={{ request.GET.genre }}{% endif %}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item">
+                        <span class="page-link glass-card border-0 text-white px-5 fw-bold rounded-pill h-100 d-flex align-items-center fs-4">
+                            {{ movies.number }} / {{ movies.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if movies.has_next %}
+                        <li class="page-item">
+                            <a class="page-link glass-card border-0 text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;" href="?page={{ movies.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.genre %}&genre={{ request.GET.genre }}{% endif %}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .letter-spacing-2 { letter-spacing: 2px; }
+    .border-primary-glow { border: 1px solid rgba(56, 189, 248, 0.4) !important; }
+    .shadow-hover:hover { 
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5) !important;
+        transform: translateY(-12px);
+    }
+    .hover-scale { transition: transform 0.2s ease; display: inline-block; }
+    .hover-scale:hover { transform: scale(1.3); }
+    .smaller { font-size: 0.85rem; }
+    .text-primary-accent { color: #38bdf8 !important; }
+    .text-danger-glow { color: #f87171 !important; }
+    .border-white-10 { border-color: rgba(255, 255, 255, 0.15) !important; }
+    .page-link { background: rgba(30, 41, 59, 0.8) !important; cursor: pointer; transition: all 0.3s ease; }
+    .page-link:hover { background: #38bdf8 !important; color: #0f172a !important; transform: scale(1.1); }
+</style>
+{% endblock %}

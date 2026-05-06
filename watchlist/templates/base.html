@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Movie Watchlist{% endblock %}</title>
+    <!-- Google Fonts: Montserrat for titles, Open Sans for body -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            /* Cinematic Palette */
+            --bg-deep: #0f172a; /* Deep Slate Blue */
+            --card-glass: rgba(30, 41, 59, 0.7);
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --primary-accent: #38bdf8; /* Sky Blue */
+            --secondary-accent: #818cf8; /* Indigo */
+            --success-glow: #4ade80;
+            --danger-glow: #f87171;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --gold: #fbbf24;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0, transparent 50%), 
+                radial-gradient(at 100% 100%, rgba(129, 140, 248, 0.15) 0, transparent 50%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            font-family: 'Open Sans', sans-serif;
+            color: var(--text-main);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+        }
+
+        h1, h2, h3, h4, .navbar-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+        }
+
+        /* Glassmorphism Refined */
+        .glass-card {
+            background: var(--card-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            border-radius: 1.25rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .navbar {
+            background: rgba(15, 23, 42, 0.9) !important;
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 1rem 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-size: 1.75rem;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, var(--primary-accent), var(--secondary-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .navbar-nav {
+            align-items: center;
+        }
+
+        .main-content {
+            flex: 1 0 auto;
+            padding: 3rem 0;
+            width: 100%;
+        }
+
+        .content-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .btn-custom {
+            border-radius: 10px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 45px; /* Fixed height for harmony */
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+            border: none;
+            color: var(--bg-deep);
+        }
+
+        .btn-primary-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+            color: var(--bg-deep);
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 2px solid var(--primary-accent) !important;
+            color: #000000 !important;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: #ffffff !important;
+            border-color: var(--secondary-accent) !important;
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.5);
+            color: #000000 !important;
+            outline: none;
+        }
+
+        .form-label {
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            margin-bottom: 0.5rem;
+        }
+
+        .text-muted {
+            color: #ffffff !important;
+            opacity: 0.8;
+        }
+
+        .form-text {
+            color: #ffffff !important;
+            opacity: 0.7;
+        }
+
+        .form-select option {
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        /* Standardize button sizes */
+        .btn-custom {
+            border-radius: 10px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 48px; /* Slightly taller for better touch target */
+        }
+
+        .movie-card:hover {
+            border-color: var(--primary-accent);
+            transform: translateY(-8px);
+        }
+
+        .rating-badge {
+            background: var(--gold);
+            color: var(--bg-deep);
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+        }
+
+        .badge-status {
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .status-watchlist { background: #475569; color: #ffffff; }
+        .status-watching { background: #0284c7; color: #ffffff; }
+        .status-watched { background: #16a34a; color: #ffffff; }
+
+        .invalid-feedback {
+            background: rgba(248, 113, 113, 0.15);
+            color: #ff8e8e;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--danger-glow);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .animate-in {
+            animation: fadeInScale 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 0.75rem center !important;
+            background-size: 16px 12px !important;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'movie_list' %}">
+                <i class="bi bi-film me-2"></i>CINEMA LOG
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-3">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <span class="text-muted small"><i class="bi bi-person me-1"></i> {{ user.username }}</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-primary-custom btn-custom px-4" href="{% url 'movie_add' %}">
+                                <i class="bi bi-plus-circle-fill me-2"></i>Добавить
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <form action="{% url 'logout' %}" method="post" class="m-0">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-secondary btn-custom border-0" title="Выйти">
+                                    <i class="bi bi-power fs-5"></i>
+                                </button>
+                            </form>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link text-white-50 fw-bold" href="{% url 'login' %}">ВХОД</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-primary-custom btn-custom px-4" href="{% url 'register' %}">СОЗДАТЬ АККАУНТ</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="content-wrapper">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
