@@ -1,6 +1,7 @@
 import time
 import json
 from django.db import models
+from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -8,10 +9,25 @@ from django.contrib.auth.decorators import login_required
 from django.utils.text import slugify
 from django.db.models import Avg, Count
 from django.http import JsonResponse
+from django.contrib.auth.models import User
 from .models import Article, Category, Vote, Bookmark, Rating, Comment, Notification
 from .forms import ArticleForm, CommentForm
 from django.contrib import messages
 from django.urls import reverse_lazy
+
+@login_required
+def moderator_dashboard(request):
+    if not request.user.is_staff:
+        messages.error(request, 'У вас нет прав для доступа к этой странице.')
+        return redirect('article_list')
+    
+    context = {
+        'total_articles': Article.objects.count(),
+        'pending_articles': Article.objects.filter(is_approved=False).count(),
+        'total_users': User.objects.count(),
+        'recent_articles': Article.objects.order_by('-created_at')[:5],
+    }
+    return render(request, 'articles/moderator_dashboard.html', context)
 
 class ArticleListView(ListView):
     model = Article
@@ -55,7 +71,11 @@ class ArticleListView(ListView):
             queryset = queryset.filter(category__slug=category_slug)
         if sort == 'popular':
             queryset = queryset.annotate(avg_rating=Avg('ratings__score')).filter(avg_rating__gte=4)
-        return queryset.order_by('-created_at')
+        articles = queryset.order_by('-created_at')
+        if self.request.user.is_authenticated:
+            for article in articles:
+                article.user_vote = article.get_user_vote(self.request.user)
+        return articles
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -81,8 +101,12 @@ def admin_article_list(request):
         messages.error(request, 'У вас нет прав для доступа к этой странице.')
         return redirect('article_list')
     
-    articles = Article.objects.all().select_related('author', 'category').order_by('-created_at')
-    return render(request, 'articles/admin_article_list.html', {'articles_list': articles})
+    articles_qs = Article.objects.all().select_related('author', 'category').order_by('-created_at')
+    paginator = Paginator(articles_qs, 20)
+    page_number = request.GET.get('page')
+    articles_list = paginator.get_page(page_number)
+    
+    return render(request, 'articles/admin_article_list.html', {'articles_list': articles_list})
 
 @login_required
 def toggle_article_approval(request, slug):
@@ -96,13 +120,25 @@ def toggle_article_approval(request, slug):
     
     status = 'одобрена' if article.is_approved else 'отправлена на модерацию'
     
-    # Create notification for the author
     Notification.objects.create(
         user=article.author,
         message=f'Ваша статья "{article.title}" {status}.'
     )
     
     messages.success(request, f'Статья "{article.title}" {status}.')
+    return redirect('admin_article_list')
+
+@login_required
+def delete_article_staff(request, slug):
+    if not request.user.is_superuser:
+        messages.error(request, 'Только суперадмин может удалять статьи.')
+        return redirect('admin_article_list')
+    
+    article = get_object_or_404(Article, slug=slug)
+    title = article.title
+    article.delete()
+    
+    messages.success(request, f'Статья "{title}" полностью удалена.')
     return redirect('admin_article_list')
 
 class ArticleDetailView(DetailView):
@@ -128,7 +164,8 @@ class ArticleDetailView(DetailView):
             
         
         if self.request.user.is_authenticated:
-            context['user_vote'] = Vote.objects.filter(article=self.object, user=self.request.user).first()
+            vote = Vote.objects.filter(article=self.object, user=self.request.user).first()
+            context['user_vote_value'] = vote.value if vote else 0
             context['is_bookmarked'] = Bookmark.objects.filter(article=self.object, user=self.request.user).exists()
             context['user_rating'] = Rating.objects.filter(article=self.object, user=self.request.user).first()
             context['comment_form'] = CommentForm()
@@ -192,18 +229,23 @@ def vote_article(request, slug, value):
     article = get_object_or_404(Article, slug=slug)
     value = int(value)
     vote, created = Vote.objects.get_or_create(article=article, user=request.user, defaults={'value': value})
+    user_vote = 0
     if not created:
         if vote.value == value:
             vote.delete()
         else:
             vote.value = value
             vote.save()
+            user_vote = value
+    else:
+        user_vote = value
+
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({
             'total_likes': article.total_likes,
             'total_dislikes': article.total_dislikes,
-            'balance': article.total_likes + article.total_dislikes,
-            'user_vote': value if not created or (not created and vote.value == value) else 0
+            'balance': article.total_likes - article.total_dislikes,
+            'user_vote': user_vote
         })
     return redirect('article_detail', slug=slug)
 

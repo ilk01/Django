@@ -177,8 +177,7 @@
                                         <a href="{% url 'profile' user.username %}" class="block px-4 py-2 text-[15px] hover:bg-[#f5f9fa] dark:hover:bg-[#333] hover:text-[#548eaa] transition-colors">Мой профиль</a>
                                         <a href="{% url 'profile' user.username %}?tab=bookmarks" class="block px-4 py-2 text-[15px] hover:bg-[#f5f9fa] dark:hover:bg-[#333] hover:text-[#548eaa] transition-colors">Закладки</a>
                                         {% if user.is_staff %}
-                                            <a href="{% url 'admin_users_list' %}" class="block px-4 py-2 text-[15px] hover:bg-[#f5f9fa] dark:hover:bg-[#333] hover:text-[#548eaa] transition-colors font-medium border-t border-gray-50 dark:border-gray-800/50">Управление пользователями</a>
-                                            <a href="{% url 'admin_article_list' %}" class="block px-4 py-2 text-[15px] hover:bg-[#f5f9fa] dark:hover:bg-[#333] hover:text-[#548eaa] transition-colors font-medium">Управление статьями</a>
+                                            <a href="{% url 'moderator_dashboard' %}" class="block px-4 py-2 text-[15px] hover:bg-[#f5f9fa] dark:hover:bg-[#333] hover:text-[#548eaa] transition-colors font-medium border-t border-gray-50 dark:border-gray-800/50 text-blue-600 dark:text-blue-400">Панель модератора</a>
                                         {% endif %}
                                     </div>
                                     <div class="py-2">
@@ -212,24 +211,51 @@
         {% block content %}{% endblock %}
     </main>
     {% if request.resolver_match.url_name != 'login' and request.resolver_match.url_name != 'register' %}
-    <footer class="bg-[#303e4d] dark:bg-[#1a1a1a] text-white mt-12 pt-12 pb-8 border-t dark:border-gray-800">
+    <footer class="bg-[#303e4d] dark:bg-[#1a1a1a] text-white mt-12 py-12 border-t dark:border-gray-800">
         <div class="max-w-[1200px] mx-auto px-4">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 border-b border-gray-600 dark:border-gray-800 pb-12 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                <div class="col-span-1 md:col-span-1">
+                    <h2 class="text-2xl font-bold mb-6 tracking-tighter">ХАБР</h2>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                        Сообщество IT-специалистов. Делимся опытом, знаниями и новостями из мира технологий.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="https://vk.com" target="_blank" class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-all duration-300" title="ВКонтакте">
+                            <i class="fab fa-vk text-sm"></i>
+                        </a>
+                        <a href="https://telegram.org" target="_blank" class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-400 transition-all duration-300" title="Telegram">
+                            <i class="fab fa-telegram-plane text-sm"></i>
+                        </a>
+                        <a href="https://youtube.com" target="_blank" class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-red-600 transition-all duration-300" title="YouTube">
+                            <i class="fab fa-youtube text-sm"></i>
+                        </a>
+                        <a href="https://github.com" target="_blank" class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-gray-900 transition-all duration-300" title="GitHub">
+                            <i class="fab fa-github text-sm"></i>
+                        </a>
+                    </div>
+                </div>
+
                 <div>
-                    <h3 class="text-[14px] font-bold uppercase tracking-wider mb-6 border-b border-gray-500 dark:border-gray-700 pb-2">Разделы</h3>
-                    <ul class="space-y-3 text-[13px] text-gray-300 dark:text-gray-400">
-                        <li><a href="{% url 'article_list' %}?feed=all&type=article" class="hover:text-white transition-colors">Статьи</a></li>
-                        <li><a href="{% url 'article_list' %}?feed=all&type=news" class="hover:text-white transition-colors">Новости</a></li>
+                    <h3 class="text-[14px] font-bold uppercase tracking-wider mb-6 text-gray-300 border-l-2 border-[#548eaa] pl-3">Разделы</h3>
+                    <ul class="space-y-3 text-[13px] text-gray-400">
+                        <li><a href="{% url 'article_list' %}?feed=all&type=article" class="hover:text-[#548eaa] transition-colors">Все статьи</a></li>
+                        <li><a href="{% url 'article_list' %}?feed=all&type=news" class="hover:text-[#548eaa] transition-colors">Новости IT</a></li>
+                        <li><a href="{% url 'authors_list' %}" class="hover:text-[#548eaa] transition-colors">Рейтинг авторов</a></li>
+                        <li><a href="{% url 'article_create' %}" class="hover:text-[#548eaa] transition-colors">Написать пост</a></li>
                     </ul>
                 </div>
+
+                <div class="hidden md:block"></div>
+                <div class="hidden md:block"></div>
             </div>
-            <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 text-[12px] text-gray-400 dark:text-gray-500">
-                <div> 2006—2026, Habr</div>
-                <div class="flex space-x-4 text-lg">
-                    <a href="https://vk.com" target="_blank" class="hover:text-blue-400 transition-colors"><i class="fab fa-vk"></i></a>
-                    <a href="https://telegram.org" target="_blank" class="hover:text-blue-300 transition-colors"><i class="fab fa-telegram"></i></a>
-                    <a href="https://youtube.com" target="_blank" class="hover:text-red-600 transition-colors"><i class="fab fa-youtube"></i></a>
-                    <a href="https://instagram.com" target="_blank" class="hover:text-pink-600 transition-colors"><i class="fab fa-instagram"></i></a>
+
+            <div class="pt-8 border-t border-gray-700/50 flex flex-col md:flex-row justify-between items-center text-[12px] text-gray-500">
+                <div class="mb-4 md:mb-0">
+                    &copy; 2006—2026, Habr (Django Edition). Все права защищены.
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="hover:text-gray-300 transition-colors">Конфиденциальность</a>
+                    <a href="#" class="hover:text-gray-300 transition-colors">Cookies</a>
                 </div>
             </div>
         </div>

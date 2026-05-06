@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Панель модератора — Хабр{% endblock %}
+
+{% block content %}
+<div class="max-w-[1200px] mx-auto py-8 px-4">
+    <div class="flex flex-col lg:flex-row gap-8 items-start">
+        <!-- Sidebar Navigation -->
+        <div class="lg:w-[240px] shrink-0">
+            <div class="space-y-6">
+                <div class="space-y-1">
+                    <h3 class="px-3 text-[11px] font-bold uppercase tracking-widest text-[#707e8c] dark:text-gray-500 mb-4">Управление</h3>
+                    <nav class="space-y-0.5">
+                        <a href="{% url 'moderator_dashboard' %}" class="flex items-center px-3 py-2 text-[14px] bg-[#548eaa] text-white rounded-sm font-bold">
+                            Дашборд
+                        </a>
+                        <a href="{% url 'admin_article_list' %}" class="flex items-center px-3 py-2 text-[14px] text-[#333] dark:text-gray-300 hover:bg-[#f5f9fa] dark:hover:bg-[#2a2a2a] hover:text-[#548eaa] rounded-sm transition-colors">
+                            Статьи
+                        </a>
+                        <a href="{% url 'admin_users_list' %}" class="flex items-center px-3 py-2 text-[14px] text-[#333] dark:text-gray-300 hover:bg-[#f5f9fa] dark:hover:bg-[#2a2a2a] hover:text-[#548eaa] rounded-sm transition-colors">
+                            Пользователи
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex-grow">
+            <h1 class="text-2xl font-bold text-[#333] dark:text-gray-100 mb-8">Обзор системы</h1>
+
+            <div class="space-y-8">
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white dark:bg-[#2a2a2a] p-6 shadow-sm border border-gray-100 dark:border-gray-800 rounded-sm">
+                        <div class="text-[11px] font-bold uppercase tracking-widest text-[#707e8c] dark:text-gray-500 mb-1">Всего статей</div>
+                        <div class="text-3xl font-bold text-[#333] dark:text-gray-100">{{ total_articles }}</div>
+                    </div>
+                    <div class="bg-white dark:bg-[#2a2a2a] p-6 shadow-sm border border-gray-100 dark:border-gray-800 rounded-sm">
+                        <div class="text-[11px] font-bold uppercase tracking-widest text-[#707e8c] dark:text-gray-500 mb-1">На модерации</div>
+                        <div class="text-3xl font-bold text-orange-500">{{ pending_articles }}</div>
+                    </div>
+                    <div class="bg-white dark:bg-[#2a2a2a] p-6 shadow-sm border border-gray-100 dark:border-gray-800 rounded-sm">
+                        <div class="text-[11px] font-bold uppercase tracking-widest text-[#707e8c] dark:text-gray-500 mb-1">Пользователей</div>
+                        <div class="text-3xl font-bold text-[#548eaa]">{{ total_users }}</div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Table -->
+                <div class="bg-white dark:bg-[#2a2a2a] shadow-sm border border-gray-100 dark:border-gray-800 rounded-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b dark:border-gray-800 flex justify-between items-center">
+                        <h2 class="text-[15px] font-bold text-[#333] dark:text-gray-100">Последние публикации</h2>
+                        <a href="{% url 'admin_article_list' %}" class="text-[13px] text-[#548eaa] hover:underline">Все статьи</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-[11px] uppercase tracking-wider text-[#707e8c] dark:text-gray-500 bg-gray-50 dark:bg-[#1a1a1a]">
+                                    <th class="px-6 py-4 font-bold">Заголовок</th>
+                                    <th class="px-6 py-4 font-bold">Автор</th>
+                                    <th class="px-6 py-4 font-bold">Дата</th>
+                                    <th class="px-6 py-4 font-bold text-right">Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y dark:divide-gray-800">
+                                {% for article in recent_articles %}
+                                <tr class="hover:bg-gray-50 dark:hover:bg-[#333] transition-colors">
+                                    <td class="px-6 py-4">
+                                        <a href="{% url 'article_detail' article.slug %}" class="text-[14px] font-bold text-[#333] dark:text-gray-200 hover:text-[#548eaa]">
+                                            {{ article.title }}
+                                        </a>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="text-[13px] text-[#707e8c]">@{{ article.author.username }}</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="text-[12px] text-[#707e8c]">{{ article.created_at|date:"d.m.Y H:i" }}</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        {% if article.is_approved %}
+                                        <span class="text-[10px] font-bold uppercase text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-sm">Опубликовано</span>
+                                        {% else %}
+                                        <span class="text-[10px] font-bold uppercase text-orange-500 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-sm">Модерация</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="px-6 py-12 text-center text-[#707e8c]">Нет недавних публикаций</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

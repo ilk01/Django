@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from .forms import UserRegistrationForm
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from articles.models import Article
 
 def register(request):
@@ -28,9 +29,23 @@ def profile_view(request, username):
         'tab': tab,
     }
     if tab == 'articles':
-        context['articles'] = Article.objects.filter(author=user, is_approved=True)
+        articles_qs = Article.objects.filter(author=user, is_approved=True).order_by('-created_at')
+        paginator = Paginator(articles_qs, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        if request.user.is_authenticated:
+            for article in page_obj:
+                article.user_vote = article.get_user_vote(request.user)
+        context['articles'] = page_obj
     elif tab == 'bookmarks':
-        context['articles'] = Article.objects.filter(bookmarks__user=user, is_approved=True)
+        articles_qs = Article.objects.filter(bookmarks__user=user, is_approved=True).order_by('-created_at')
+        paginator = Paginator(articles_qs, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        if request.user.is_authenticated:
+            for article in page_obj:
+                article.user_vote = article.get_user_vote(request.user)
+        context['articles'] = page_obj
     return render(request, 'users/profile.html', context)
 
 def banned_view(request):
@@ -40,7 +55,7 @@ def banned_view(request):
 def toggle_admin_status(request, username):
     if not request.user.is_superuser:
         messages.error(request, 'У вас нет прав для этого действия.')
-        return redirect('profile', username=username)
+        return redirect('admin_users_list')
     
     target_user = get_object_or_404(User, username=username)
     if target_user.is_superuser:
@@ -51,13 +66,13 @@ def toggle_admin_status(request, username):
         status = 'назначен админом' if target_user.is_staff else 'снят с должности админа'
         messages.success(request, f'Пользователь {target_user.username} {status}.')
     
-    return redirect('profile', username=username)
+    return redirect('admin_users_list')
 
 @login_required
 def toggle_ban_status(request, username):
-    if not request.user.is_staff:
-        messages.error(request, 'У вас нет прав для этого действия.')
-        return redirect('profile', username=username)
+    if not request.user.is_superuser:
+        messages.error(request, 'Только суперадмин может блокировать пользователей.')
+        return redirect('admin_users_list')
     
     target_user = get_object_or_404(User, username=username)
     if target_user.is_superuser:
@@ -69,7 +84,7 @@ def toggle_ban_status(request, username):
         status = 'заблокирован' if profile.is_banned else 'разблокирован'
         messages.success(request, f'Пользователь {target_user.username} {status}.')
     
-    return redirect('profile', username=username)
+    return redirect('admin_users_list')
 
 from django.db.models import Count, Q
 
@@ -79,16 +94,20 @@ def admin_users_list(request):
         messages.error(request, 'У вас нет прав для доступа к этой странице.')
         return redirect('article_list')
     
-    users = User.objects.annotate(
+    users_qs = User.objects.annotate(
         articles_count=Count('articles'),
         comments_count=Count('comments')
     ).order_by('-date_joined')
     
-    return render(request, 'users/admin_users_list.html', {'users_list': users})
+    paginator = Paginator(users_qs, 20)
+    page_number = request.GET.get('page')
+    users_list = paginator.get_page(page_number)
+    
+    return render(request, 'users/admin_users_list.html', {'users_list': users_list})
 
 def authors_list(request):
-    from django.db.models import Count
+    from django.db.models import Count, Q
     authors = User.objects.annotate(
-        articles_count=Count('articles', filter=models.Q(articles__is_approved=True))
+        articles_count=Count('articles', filter=Q(articles__is_approved=True))
     ).filter(articles_count__gt=0).order_by('-articles_count')
     return render(request, 'users/authors_list.html', {'authors': authors})

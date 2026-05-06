@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Настройки профиля — Хабр{% endblock %}
+
+{% block content %}
+<div class="max-w-[1200px] mx-auto py-8 px-4">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar -->
+        <div class="lg:w-1/4">
+            <div class="bg-white dark:bg-[
+                <h3 class="text-[11px] font-bold uppercase tracking-widest text-[
+                <nav class="space-y-4">
+                    <a href="{% url 'profile_edit' %}" class="flex items-center text-[14px] text-[
+                        <i class="fas fa-user-edit mr-3 w-5"></i> Основные данные
+                    </a>
+                    <a href="{% url 'profile' user.username %}" class="flex items-center text-[14px] text-[
+                        <i class="fas fa-eye mr-3 w-5"></i> Посмотреть профиль
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="lg:w-3/4">
+            <div class="bg-white dark:bg-[
+                <h1 class="text-2xl font-bold text-[
+                
+                <form method="POST" class="space-y-8">
+                    {% csrf_token %}
+                    
+                    <!-- Section: Account Information -->
+                    <div class="space-y-6">
+                        <h2 class="text-xs font-bold uppercase tracking-widest text-[
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2 relative group">
+                                <label class="text-[13px] font-bold text-[
+                                <div class="w-full px-3 py-2 border border-gray-100 dark:border-gray-800 rounded bg-gray-50 dark:bg-[
+                                    {{ user.username }}
+                                </div>
+                                <!-- Tooltip -->
+                                <div class="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50">
+                                    <div class="bg-[
+                                        Никнейм изменить нельзя
+                                        <div class="absolute top-full left-4 border-8 border-transparent border-t-[
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="space-y-2 relative group">
+                                <label class="text-[13px] font-bold text-[
+                                <div class="w-full px-3 py-2 border border-gray-100 dark:border-gray-800 rounded bg-gray-50 dark:bg-[
+                                    {{ user.email }}
+                                </div>
+                                <!-- Tooltip -->
+                                <div class="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50">
+                                    <div class="bg-[
+                                        Email изменить нельзя
+                                        <div class="absolute top-full left-4 border-8 border-transparent border-t-[
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-[13px] font-bold text-[
+                                {{ u_form.first_name }}
+                                {% if u_form.first_name.errors %}
+                                    <p class="text-red-500 text-[11px] mt-1">{{ u_form.first_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[13px] font-bold text-[
+                                {{ u_form.last_name }}
+                                {% if u_form.last_name.errors %}
+                                    <p class="text-red-500 text-[11px] mt-1">{{ u_form.last_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Profile Information -->
+                    <div class="space-y-6 pt-8 border-t dark:border-gray-800">
+                        <h2 class="text-xs font-bold uppercase tracking-widest text-[
+                        
+                        <div class="space-y-2">
+                            <label class="text-[13px] font-bold text-[
+                            {{ p_form.bio }}
+                            {% if p_form.bio.errors %}
+                                <p class="text-red-500 text-[11px] mt-1">{{ p_form.bio.errors.0 }}</p>
+                            {% endif %}
+                            <p class="text-[11px] text-[
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-[13px] font-bold text-[
+                                {{ p_form.birth_date }}
+                                {% if p_form.birth_date.errors %}
+                                    <p class="text-red-500 text-[11px] mt-1">{{ p_form.birth_date.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Section -->
+                    <div class="pt-8 border-t dark:border-gray-800">
+                        <button type="submit" class="bg-[
+                            Сохранить изменения
+                        </button>
+                        <a href="{% url 'profile' user.username %}" class="ml-4 text-[14px] text-gray-500 hover:text-[
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

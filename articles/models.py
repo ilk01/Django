@@ -61,6 +61,12 @@ class Article(models.Model):
     def total_dislikes(self):
         return self.votes.filter(value=-1).count()
 
+    def get_user_vote(self, user):
+        if not user or not user.is_authenticated:
+            return 0
+        vote = self.votes.filter(user=user).first()
+        return vote.value if vote else 0
+
 class Rating(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='ratings')
     user = models.ForeignKey(User, on_delete=models.CASCADE)

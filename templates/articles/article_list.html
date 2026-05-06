@@ -116,30 +116,27 @@
                             </a>
                             <div class="flex items-center space-x-1">
                                 {% if user.is_authenticated %}
-                                    <button onclick="vote('{{ article.slug }}', '1', this)" class="vote-up hover:text-green-500 transition-colors">
-                                        <i class="fas fa-chevron-up"></i>
+                                    <button onclick="vote('{{ article.slug }}', '1', this)" class="vote-up hover:text-green-500 transition-colors {% if article.user_vote == 1 %}text-green-600{% endif %}" title="Нравится">
+                                        <i class="fas fa-thumbs-up"></i>
                                     </button>
                                 {% else %}
                                     <a href="{% url 'login' %}" class="hover:text-green-500 transition-colors">
-                                        <i class="fas fa-chevron-up"></i>
+                                        <i class="fas fa-thumbs-up"></i>
                                     </a>
                                 {% endif %}
-                                <span id="balance-{{ article.slug }}" class="vote-balance font-bold {% with balance=article.total_likes|add:article.total_dislikes %}{% if balance > 0 %}text-green-600 dark:text-green-400{% elif balance < 0 %}text-red-600 dark:text-red-400{% endif %}{% endwith %}">
-                                    {{ article.total_likes|add:article.total_dislikes|default:0 }}
-                                </span>
+                                <span id="likes-{{ article.slug }}" class="text-xs font-bold {% if article.user_vote == 1 %}text-green-600{% endif %}">{{ article.total_likes }}</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
                                 {% if user.is_authenticated %}
-                                    <button onclick="vote('{{ article.slug }}', '-1', this)" class="vote-down hover:text-red-500 transition-colors">
-                                        <i class="fas fa-chevron-down"></i>
+                                    <button onclick="vote('{{ article.slug }}', '-1', this)" class="vote-down hover:text-red-500 transition-colors {% if article.user_vote == -1 %}text-red-600{% endif %}">
+                                        <i class="fas fa-thumbs-down"></i>
                                     </button>
                                 {% else %}
                                     <a href="{% url 'login' %}" class="hover:text-red-500 transition-colors">
-                                        <i class="fas fa-chevron-down"></i>
+                                        <i class="fas fa-thumbs-down"></i>
                                     </a>
                                 {% endif %}
-                            </div>
-                            <div class="flex items-center space-x-4 text-xs">
-                                <span class="text-green-600 dark:text-green-400" id="likes-{{ article.slug }}"><i class="fas fa-thumbs-up"></i> {{ article.total_likes }}</span>
-                                <span class="text-red-600 dark:text-red-400" id="dislikes-{{ article.slug }}"><i class="fas fa-thumbs-down"></i> {{ article.total_dislikes }}</span>
+                                <span id="dislikes-{{ article.slug }}" class="text-xs font-bold {% if article.user_vote == -1 %}text-red-600{% endif %}">{{ article.total_dislikes }}</span>
                             </div>
                             <div class="flex items-center space-x-1">
                                 {% if user.is_authenticated %}
@@ -211,13 +208,33 @@ async function apiCall(url) {
 
 async function vote(slug, value, btn) {
     const data = await apiCall(`/article/${slug}/vote/${value}/`);
-    const balance = document.getElementById(`balance-${slug}`);
-    balance.innerText = data.balance;
-    balance.className = 'vote-balance font-bold ' + (data.balance > 0 ? 'text-green-600' : (data.balance < 0 ? 'text-red-600' : ''));
     const likes = document.getElementById(`likes-${slug}`);
     const dislikes = document.getElementById(`dislikes-${slug}`);
-    if (likes) likes.innerHTML = `<i class="fas fa-thumbs-up"></i> ${data.total_likes}`;
-    if (dislikes) dislikes.innerHTML = `<i class="fas fa-thumbs-down"></i> ${data.total_dislikes}`;
+    
+    // Find the container for this article's votes
+    const container = btn.closest('.flex.items-center.space-x-6');
+    const upBtn = container.querySelector('.vote-up');
+    const downBtn = container.querySelector('.vote-down');
+
+    if (likes) {
+        likes.innerText = data.total_likes;
+        likes.classList.remove('text-green-600');
+        if (data.user_vote === 1) likes.classList.add('text-green-600');
+    }
+    if (dislikes) {
+        dislikes.innerText = data.total_dislikes;
+        dislikes.classList.remove('text-red-600');
+        if (data.user_vote === -1) dislikes.classList.add('text-red-600');
+    }
+
+    if (upBtn) {
+        upBtn.classList.remove('text-green-600');
+        if (data.user_vote === 1) upBtn.classList.add('text-green-600');
+    }
+    if (downBtn) {
+        downBtn.classList.remove('text-red-600');
+        if (data.user_vote === -1) downBtn.classList.add('text-red-600');
+    }
 }
 
 async function toggleBookmark(slug, btn) {

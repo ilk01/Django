@@ -10,7 +10,9 @@ urlpatterns = [
     path('article/<slug:slug>/vote/<str:value>/', views.vote_article, name='vote_article'),
     path('article/<slug:slug>/bookmark/', views.bookmark_article, name='bookmark_article'),
     path('article/<slug:slug>/rate/<int:score>/', views.rate_article, name='rate_article'),
+    path('staff/dashboard/', views.moderator_dashboard, name='moderator_dashboard'),
     path('staff/articles/', views.admin_article_list, name='admin_article_list'),
+    path('article/<slug:slug>/delete-staff/', views.delete_article_staff, name='delete_article_staff'),
     path('article/<slug:slug>/toggle-approval/', views.toggle_article_approval, name='toggle_article_approval'),
     path('notifications/read/', views.mark_notifications_read, name='mark_notifications_read'),
 ]

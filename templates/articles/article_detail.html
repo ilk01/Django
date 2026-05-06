@@ -51,31 +51,48 @@
                 {% endif %}
             </div>
             <div class="flex items-center justify-between border-t border-gray-100 dark:border-gray-800 mt-12 pt-6">
-                <div class="flex items-center space-x-8 text-[#707e8c] dark:text-gray-400">
-                    <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-6 text-[#707e8c] dark:text-gray-400">
+                    <div class="flex items-center space-x-4">
                         {% if user.is_authenticated %}
-                            <button onclick="vote('{{ article.slug }}', '1', this)" class="vote-up hover:text-green-500 transition-colors {% if user_vote.value == 1 %}text-green-600{% endif %}">
-                                <i class="fas fa-chevron-up text-lg"></i>
-                            </button>
-                        {% endif %}
-                        <span id="balance-{{ article.slug }}" class="font-bold text-lg {% with balance=article.total_likes|add:article.total_dislikes %}{% if balance > 0 %}text-green-600{% elif balance < 0 %}text-red-600{% endif %}{% endwith %}">
-                            {{ article.total_likes|add:article.total_dislikes|default:0 }}
-                        </span>
-                        {% if user.is_authenticated %}
-                            <button onclick="vote('{{ article.slug }}', '-1', this)" class="vote-down hover:text-red-500 transition-colors {% if user_vote.value == -1 %}text-red-600{% endif %}">
-                                <i class="fas fa-chevron-down text-lg"></i>
-                            </button>
+                            <div class="flex items-center space-x-1">
+                                <button onclick="vote('1')" class="vote-up hover:text-green-500 transition-colors {% if user_vote_value == 1 %}text-green-600{% endif %}" title="Нравится">
+                                    <i class="fas fa-thumbs-up text-lg"></i>
+                                </button>
+                                <span id="likes-count" class="text-sm font-bold {% if user_vote_value == 1 %}text-green-600{% endif %}">{{ article.total_likes }}</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <button onclick="vote('-1')" class="vote-down hover:text-red-500 transition-colors {% if user_vote_value == -1 %}text-red-600{% endif %}" title="Не нравится">
+                                    <i class="fas fa-thumbs-down text-lg"></i>
+                                </button>
+                                <span id="dislikes-count" class="text-sm font-bold {% if user_vote_value == -1 %}text-red-600{% endif %}">{{ article.total_dislikes }}</span>
+                            </div>
+                        {% else %}
+                            <div class="flex items-center space-x-4">
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-thumbs-up text-lg text-gray-300"></i>
+                                    <span class="text-sm font-bold">{{ article.total_likes }}</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-thumbs-down text-lg text-gray-300"></i>
+                                    <span class="text-sm font-bold">{{ article.total_dislikes }}</span>
+                                </div>
+                            </div>
                         {% endif %}
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <i class="far fa-eye"></i>
+                    <div class="flex items-center space-x-2" title="Просмотры">
+                        <i class="far fa-eye text-lg"></i>
                         <span>{{ article.view_count }}</span>
                     </div>
                     {% if user.is_authenticated %}
-                        <button onclick="toggleBookmark('{{ article.slug }}', this)" class="bookmark-btn flex items-center space-x-2 hover:text-[#548eaa] transition-colors {% if is_bookmarked %}text-[#548eaa]{% endif %}">
-                            <i class="{% if is_bookmarked %}fas{% else %}far{% endif %} fa-bookmark"></i>
-                            <span class="bookmark-count">{{ article.bookmarks.count }}</span>
+                        <button onclick="toggleBookmark()" id="bookmark-btn" class="flex items-center space-x-2 hover:text-[#548eaa] transition-colors {% if is_bookmarked %}text-[#548eaa]{% endif %}" title="В закладки">
+                            <i id="bookmark-icon" class="{% if is_bookmarked %}fas{% else %}far{% endif %} fa-bookmark text-lg"></i>
+                            <span id="bookmark-count">{{ article.bookmarks.count }}</span>
                         </button>
+                    {% endif %}
+                    {% if user == article.author or user.is_staff %}
+                        <a href="{% url 'article_update' article.slug %}" class="hover:text-[#548eaa] transition-colors" title="Редактировать">
+                            <i class="fas fa-pencil-alt text-lg"></i>
+                        </a>
                     {% endif %}
                 </div>
                 <div class="flex items-center space-x-6 text-[#707e8c] dark:text-gray-400">
@@ -208,19 +225,23 @@ function getCookie(name) {
 
 async function vote(value) {
     const data = await apiCall(`/article/{{ article.slug }}/vote/${value}/`);
-    const balance = document.getElementById('vote-balance');
-    balance.innerText = data.balance;
-    balance.className = 'font-bold text-[16px] ' + (data.balance > 0 ? 'text-green-600' : (data.balance < 0 ? 'text-red-600' : ''));
-    const likes = document.getElementById('likes-detail');
-    const dislikes = document.getElementById('dislikes-detail');
-    if (likes) likes.innerHTML = `<i class="fas fa-thumbs-up"></i> ${data.total_likes}`;
-    if (dislikes) dislikes.innerHTML = `<i class="fas fa-thumbs-down"></i> ${data.total_dislikes}`;
-    document.querySelectorAll('.vote-btn').forEach(btn => {
-        btn.classList.remove('text-green-600', 'text-red-600');
-        if (btn.dataset.value === data.user_vote.toString()) {
-            btn.classList.add(data.user_vote === 1 ? 'text-green-600' : 'text-red-600');
-        }
-    });
+    const likesCount = document.getElementById('likes-count');
+    const dislikesCount = document.getElementById('dislikes-count');
+    const upBtn = document.querySelector('.vote-up');
+    const downBtn = document.querySelector('.vote-down');
+    if (likesCount) likesCount.innerText = data.total_likes;
+    if (dislikesCount) dislikesCount.innerText = data.total_dislikes;
+    if (upBtn) upBtn.classList.remove('text-green-600');
+    if (downBtn) downBtn.classList.remove('text-red-600');
+    if (likesCount) likesCount.classList.remove('text-green-600');
+    if (dislikesCount) dislikesCount.classList.remove('text-red-600');
+    if (data.user_vote === 1) {
+        if (upBtn) upBtn.classList.add('text-green-600');
+        if (likesCount) likesCount.classList.add('text-green-600');
+    } else if (data.user_vote === -1) {
+        if (downBtn) downBtn.classList.add('text-red-600');
+        if (dislikesCount) dislikesCount.classList.add('text-red-600');
+    }
 }
 
 async function rate(score) {
